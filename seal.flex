@@ -51,12 +51,12 @@ extern YYSTYPE seal_yylval;
  *  Add Your own definitions here
  */
 
-int hexToDecimal(const char* arr)
+long long hexToDecimal(const char* arr)
 {
     int n;
     int temp;
     n = strlen(arr)-2;
-    int sum = 0;
+    long long sum = 0;
     for (int i = 2; arr[i]!='\0'; i++)         //最后一位是'\0'，不用算进去
     {
         switch (arr[i])
@@ -74,7 +74,7 @@ int hexToDecimal(const char* arr)
     return sum;
 }
 
-void int2string(char* m, int n)
+void int2string(char* m, long long n)
 {
     if (n==0){
         m[0] = '0';
@@ -111,7 +111,19 @@ void simplifyString(char* proc, const char* orig){
     while(*tmp1 != '\0'){
         if (*tmp1 == '\\')
             *(tmp2++) = *((++tmp1)++);
-        else if (*tmp1 == '"' or *tmp1 == '`')
+        else if (*tmp1 == '"')
+            ++tmp1;
+        else
+            *(tmp2++) = *(tmp1++);
+    }
+    *tmp2 = '\0';
+    return;
+}
+void simplifyString2(char* proc, const char* orig){
+    const char* tmp1 = orig;
+    char* tmp2 = proc;
+    while(*tmp1 != '\0'){
+        if (*tmp1 == '`')
             ++tmp1;
         else
             *(tmp2++) = *(tmp1++);
@@ -130,15 +142,22 @@ void simplifyString(char* proc, const char* orig){
 
 DIGIT [0-9]
 DIGIT_EXCEPT_ZERO [1-9]
-FLOAT ^{DIGIT_EXCEPT_ZERO}{DIGIT}*\.{DIGIT}*|0\.{DIGIT}*{DIGIT_EXCEPT_ZERO}{DIGIT}*|0?\.0+|0$
-DIGIT_HEX 0x[0-9A-Fa-f]+
+FLOAT [1-9][0-9]*\.[0-9]+|0\.[0-9]*[1-9][0-9]*
+DIGIT_HEX (0x|0X)[0-9A-Fa-f]+
+BOOL_VAL "true"|"false"
+
 SPACE [ \t\r]
-EOL [\n|\r\n]
-OPERATOR []
+EOL [\n\r]
+OPERATER [\+\-\/=%&\^~\*\|]
+LOGIC_OPERATOR [><!]
+MULTI_OPERATOR ">="|"<="|"=="|"!="|"&&"|"||"
+BRACKET [\(\)\{\}]
 
 LINE_COMMENT "//"[^\n]*
 MUTILINE_COMMENT \/\*([^\*]|\*[^/])*\*\/
+MUTILINE_COMMENT_WITHOUT_CLOSING \/\*([^\*]|\*[^/])*
 TYPE "Int"|"Float"|"String"|"Bool"|"Void"
+RESERVED_WORD "var"|"func"|"return"|"if"|"else"|"while"|"for"|"break"|"continue"
 
 LETTER_LOWERCASE [a-z]
 LETTER_UPPERCASE [A-Z]
@@ -158,11 +177,16 @@ STRING_APOSTROPHE `[^`]*`
 {MUTILINE_COMMENT} {
     curr_lineno += countStr(yytext, '\n');
 }
+{MUTILINE_COMMENT_WITHOUT_CLOSING} {
+    curr_lineno += countStr(yytext, '\n');
+    strcpy(seal_yylval.error_msg, "EOF in comment");
+    return(ERROR);
+}
 {LINE_COMMENT} {;}
 {EOL} {
     curr_lineno += 1;
 }
-[;=] {
+[;,] {
     char c = yytext[0];
     return(c);
 }
@@ -170,12 +194,51 @@ STRING_APOSTROPHE `[^`]*`
     seal_yylval.symbol = idtable.add_string(yytext);
     return(TYPEID);
 }
-"var" {
-    return(VAR);
+{OPERATER} {
+    char c = yytext[0];
+    return(c);
 }
-{LETTER_LOWERCASE}{NAME_CONTENT}* {
-    seal_yylval.symbol = idtable.add_string(yytext);
-    return(OBJECTID);
+{BRACKET} {
+    char c = yytext[0];
+    return(c);
+}
+{LOGIC_OPERATOR} {
+    char c = yytext[0];
+    return(c);
+}
+{MULTI_OPERATOR} {
+    switch(yytext[0]){
+        case '>': return(GE);
+        case '=': return(EQUAL);
+        case '<': return(LE);
+        case '!': return(NE);
+        case '&': return(AND);
+        case '|': return(OR);
+    }
+}
+{RESERVED_WORD} {
+    switch(yytext[0]){
+        case 'v': return(VAR);
+        case 'f':
+            if (yytext[1]=='u')
+                return(FUNC);
+            else if (yytext[1]=='o')
+                return(FOR);
+        case 'r': return(RETURN);
+        case 'i': return(IF);
+        case 'b': return(BREAK);
+        case 'c': return(CONTINUE);
+        case 'e': return(ELSE);
+        case 'w': return(WHILE);
+    }
+}
+{DIGIT_EXCEPT_ZERO}{DIGIT}*|0 {
+    seal_yylval.symbol = inttable.add_string(yytext);
+    return(CONST_INT);
+}
+{FLOAT} {
+    seal_yylval.symbol = floattable.add_string(yytext);
+    return(CONST_FLOAT);
 }
 {DIGIT_HEX} {
     char s[strlen(yytext)];
@@ -183,12 +246,24 @@ STRING_APOSTROPHE `[^`]*`
     seal_yylval.symbol = inttable.add_string(s);
     return (CONST_INT);
 }
+{BOOL_VAL} {
+    if (yytext[0]=='t')
+        seal_yylval.boolean = true;
+    else
+        seal_yylval.boolean = false;
+    return(CONST_BOOL);
+}
+{LETTER_LOWERCASE}{NAME_CONTENT}* {
+    seal_yylval.symbol = idtable.add_string(yytext);
+    return(OBJECTID);
+}
 {STRING_QUOTSTION} {
+    //count fuction remove '"' '\'
     if (strlen(yytext) > 255){
-        char s[256];
+        char s[259];
         strncpy(s, yytext, 255);
-        s[256] = '\0';
-        yyless(255);
+        s[258] = '\0';
+        yyless(258);
         curr_lineno += countStr(s, '\n');
         strcpy(seal_yylval.error_msg, "String constant too long");
         return(ERROR);
@@ -213,7 +288,7 @@ STRING_APOSTROPHE `[^`]*`
 {STRING_APOSTROPHE} {
     curr_lineno += countStr(yytext, '\n');
     char s[strlen(yytext)];
-    simplifyString(s, yytext);
+    simplifyString2(s, yytext);
     seal_yylval.symbol = stringtable.add_string(s);
     return(CONST_STRING);
 }
