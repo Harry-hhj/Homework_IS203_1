@@ -134,8 +134,10 @@ FLOAT ^{DIGIT_EXCEPT_ZERO}{DIGIT}*\.{DIGIT}*|0\.{DIGIT}*{DIGIT_EXCEPT_ZERO}{DIGI
 DIGIT_HEX 0x[0-9A-Fa-f]+
 SPACE [ \t\r]
 EOL [\n|\r\n]
+OPERATOR []
+
 LINE_COMMENT "//"[^\n]*
-MUTILINE_COMMENT "/*"(.|\n)*"*/"
+MUTILINE_COMMENT \/\*([^\*]|\*[^/])*\*\/
 TYPE "Int"|"Float"|"String"|"Bool"|"Void"
 
 LETTER_LOWERCASE [a-z]
@@ -153,7 +155,7 @@ STRING_APOSTROPHE `[^`]*`
  *	Add Rules here. Error function has been given.
  */
 {SPACE} {;}
-("/*")([^\*]|\*[^/])*("*/") {
+{MUTILINE_COMMENT} {
     curr_lineno += countStr(yytext, '\n');
 }
 {LINE_COMMENT} {;}
