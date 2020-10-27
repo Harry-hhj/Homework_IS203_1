@@ -16,6 +16,9 @@
 #include <stdlib.h>
 
 #include <stdio.h>
+#include <cmath>
+#include <cstring>
+using namespace std;
 
 /* The compiler assumes these identifiers. */
 #define yylval seal_yylval
@@ -48,6 +51,63 @@ extern YYSTYPE seal_yylval;
  *  Add Your own definitions here
  */
 
+int hexToDecimal(const char* arr)
+{
+    int n;
+    int temp;
+    n = strlen(arr)-2;
+    int sum = 0;
+    for (int i = 2; arr[i]!='\0'; i++)         //最后一位是'\0'，不用算进去
+    {
+        switch (arr[i])
+        {
+            case 'a':case 'A': temp = 10; break;
+            case 'b':case 'B': temp = 11; break;
+            case 'c':case 'C': temp = 12; break;
+            case 'd':case 'D': temp = 13; break;
+            case 'e':case 'E': temp = 14; break;
+            case 'f':case 'F': temp = 15; break;
+            default: temp = arr[i] - '0'; break;
+        }
+        sum = sum + temp * pow(16, n + 1- i);
+    }
+    return sum;
+}
+
+void int2string(char* m, int n)
+{
+    if (n==0){
+        m[0] = '0';
+        m[1] = '\0';
+        return;
+    }
+    int len = 0, n_ = n;
+    while (n) {
+        n /= 10;
+        ++len;
+    }
+    n = n_;
+    m[len] = '\0';
+    while (len--){
+        int tmp = n % 10;
+        m[len] = '0'+tmp;
+        n /= 10;
+    }
+    return;
+}
+
+int countStr(char* m, char s){
+    int cnt = 0;
+    for (int i = 0; m[i]!='\0'; ++i){
+        if (m[i] == s)
+            ++cnt;
+    }
+    return cnt;
+}
+
+void simplifyString(char* proc, char* orig){
+    ;
+}
 
 %}
 
@@ -56,20 +116,73 @@ extern YYSTYPE seal_yylval;
   */
 %option noyywrap
 
-FLOAT ^{DIGIT_EXCEPT_ZERO}{DIGIT}*\.{DIGIT}*|0\.{DIGIT}*{DIGIT_EXCEPT_ZERO}{DIGIT}*|0?\.0+|0$
+
 DIGIT [0-9]
 DIGIT_EXCEPT_ZERO [1-9]
+FLOAT ^{DIGIT_EXCEPT_ZERO}{DIGIT}*\.{DIGIT}*|0\.{DIGIT}*{DIGIT_EXCEPT_ZERO}{DIGIT}*|0?\.0+|0$
 DIGIT_HEX 0x[0-9A-Fa-f]+
 SPACE [ \t\r]
-LINE_COMMENT \/\/[^\n]*
-MUTI_LINE_COMMENT /\*(.|\n)*\*/  //correct
-STRING_QUOTSTION \"[^\"]*\"  //
-STRING_APOSTROPHE `[^]*`  //
+EOL [\n|\r\n]
+LINE_COMMENT "//"[^\n]*
+MUTI_LINE_COMMENT "/*"(.|\n)*"*/"
+TYPE "Int"|"Float"|"String"|"Bool"|"Void"
+LETTER_LOWERCASE [a-z]
+NAME_CONTENT [a-zA-z_0-9]
+
+STRING_QUOTSTION \"([^(\"|\\\n)]*(\\\n)*)*\"
+STRING_QUOTSTION_ERROR \"[^\"]*[^\\]\n.*(\"\n)*
+STRING_APOSTROPHE `[^`]*`
 %%
  /*
  *	Add Rules here. Error function has been given.
  */
-{DIGIT} {seal_yylval.symbol = inttable.add_string(yytext);return (CONST_INT);}
-. {strcpy(seal_yylval.error_msg, yytext);return (ERROR);}
+{SPACE} {;}
+{MUTI_LINE_COMMENT} {
+    curr_lineno += countStr(yytext, '\n');
+}
+{LINE_COMMENT} {;}
+{EOL} {
+    curr_lineno += 1;
+}
+[;=] {
+    char c = yytext[0];
+    return(c);
+}
+{TYPE} {
+    seal_yylval.symbol = idtable.add_string(yytext);
+    return(TYPEID);
+}
+"var" {
+    return(VAR);
+}
+{LETTER_LOWERCASE}{NAME_CONTENT}* {
+    seal_yylval.symbol = idtable.add_string(yytext);
+    return(OBJECTID);
+}
+{DIGIT_HEX} {
+    char s[strlen(yytext)];
+    int2string(s, hexToDecimal(yytext));
+    seal_yylval.symbol = inttable.add_string(s);
+    return (CONST_INT);
+}
+{STRING_QUOTSTION} {
+    curr_lineno += countStr(yytext, '\n');
+    seal_yylval.symbol = stringtable.add_string(yytext);
+    return(CONST_STRING);
+}
+{STRING_QUOTSTION_ERROR} {
+    curr_lineno += countStr(yytext, '\n');
+    strcpy(seal_yylval.error_msg, "Missing right \".");
+    return(ERROR);
+}
+{STRING_APOSTROPHE} {
+    curr_lineno += countStr(yytext, '\n');
+    seal_yylval.symbol = stringtable.add_string(yytext);
+    return(CONST_STRING);
+}
+. {
+    strcpy(seal_yylval.error_msg, yytext);
+    return (ERROR);
+}
 
 %%
