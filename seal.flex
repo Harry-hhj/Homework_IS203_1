@@ -136,7 +136,6 @@ SPACE [ \t\r]
 EOL [\n|\r\n]
 LINE_COMMENT "//"[^\n]*
 MUTILINE_COMMENT "/*"(.|\n)*"*/"
-MUTILINE_COMMENT_WITHOUT_CLOSING
 TYPE "Int"|"Float"|"String"|"Bool"|"Void"
 
 LETTER_LOWERCASE [a-z]
@@ -154,13 +153,8 @@ STRING_APOSTROPHE `[^`]*`
  *	Add Rules here. Error function has been given.
  */
 {SPACE} {;}
-{MUTILINE_COMMENT} {
+("/*")([^\*]|\*[^/])*("*/") {
     curr_lineno += countStr(yytext, '\n');
-}
-{MUTILINE_COMMENT_WITHOUT_CLOSING} {
-    curr_lineno += countStr(yytext, '\n');
-    strcpy(seal_yylval.error_msg, "EOF in comment");
-    return(ERROR);
 }
 {LINE_COMMENT} {;}
 {EOL} {
