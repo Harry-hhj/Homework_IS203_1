@@ -21,6 +21,7 @@ FLEX=flex ${FFLAGS}
 ${OUTPUT}:	lexer
 	@rm -f test.output
 	-./lexer test.seal >test.output 2>&1 
+	-./lexer_answer test.seal >test_ans.output 2>&1
 
 lexer: ${OBJS} ${SRC}
 	${CC} ${CFLAGS} ${OBJS} -o lexer

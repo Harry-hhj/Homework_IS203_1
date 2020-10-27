@@ -105,8 +105,19 @@ int countStr(char* m, char s){
     return cnt;
 }
 
-void simplifyString(char* proc, char* orig){
-    ;
+void simplifyString(char* proc, const char* orig){
+    const char* tmp1 = orig;
+    char* tmp2 = proc;
+    while(*tmp1 != '\0'){
+        if (*tmp1 == '\\')
+            *(tmp2++) = *((++tmp1)++);
+        else if (*tmp1 == '"' or *tmp1 == '`')
+            ++tmp1;
+        else
+            *(tmp2++) = *(tmp1++);
+    }
+    *tmp2 = '\0';
+    return;
 }
 
 %}
@@ -124,21 +135,32 @@ DIGIT_HEX 0x[0-9A-Fa-f]+
 SPACE [ \t\r]
 EOL [\n|\r\n]
 LINE_COMMENT "//"[^\n]*
-MUTI_LINE_COMMENT "/*"(.|\n)*"*/"
+MUTILINE_COMMENT "/*"(.|\n)*"*/"
+MUTILINE_COMMENT_WITHOUT_CLOSING
 TYPE "Int"|"Float"|"String"|"Bool"|"Void"
-LETTER_LOWERCASE [a-z]
-NAME_CONTENT [a-zA-z_0-9]
 
-STRING_QUOTSTION \"([^(\"|\\\n)]*(\\\n)*)*\"
-STRING_QUOTSTION_ERROR \"[^\"]*[^\\]\n.*(\"\n)*
+LETTER_LOWERCASE [a-z]
+LETTER_UPPERCASE [A-Z]
+NAME_CONTENT [a-zA-Z_0-9]
+NAME_CASE_ERROR [A-Z][a-zA-Z_0-9]*
+
+STRING_QUOTSTION \"([^\"\n]|\\\n)*\"
+STRING_QUOTSTION_WITH_NO_TRANSFER \"[^\"\n]*[^\"\\]?\n
+STRING_QUOTSTION_WITH_EOF \"[^\"\n]*
 STRING_APOSTROPHE `[^`]*`
+
 %%
  /*
  *	Add Rules here. Error function has been given.
  */
 {SPACE} {;}
-{MUTI_LINE_COMMENT} {
+{MUTILINE_COMMENT} {
     curr_lineno += countStr(yytext, '\n');
+}
+{MUTILINE_COMMENT_WITHOUT_CLOSING} {
+    curr_lineno += countStr(yytext, '\n');
+    strcpy(seal_yylval.error_msg, "EOF in comment");
+    return(ERROR);
 }
 {LINE_COMMENT} {;}
 {EOL} {
@@ -166,19 +188,44 @@ STRING_APOSTROPHE `[^`]*`
     return (CONST_INT);
 }
 {STRING_QUOTSTION} {
-    curr_lineno += countStr(yytext, '\n');
-    seal_yylval.symbol = stringtable.add_string(yytext);
-    return(CONST_STRING);
+    if (strlen(yytext) > 255){
+        char s[256];
+        strncpy(s, yytext, 255);
+        s[256] = '\0';
+        yyless(255);
+        curr_lineno += countStr(s, '\n');
+        strcpy(seal_yylval.error_msg, "String constant too long");
+        return(ERROR);
+    }
+    else{
+        curr_lineno += countStr(yytext, '\n');
+        char s[strlen(yytext)];
+        simplifyString(s, yytext);
+        seal_yylval.symbol = stringtable.add_string(s);
+        return(CONST_STRING);
+    }
 }
-{STRING_QUOTSTION_ERROR} {
+{STRING_QUOTSTION_WITH_NO_TRANSFER} {
     curr_lineno += countStr(yytext, '\n');
-    strcpy(seal_yylval.error_msg, "Missing right \".");
+    strcpy(seal_yylval.error_msg, "newline in quotation must use a '\\'");
+    return(ERROR);
+}
+{STRING_QUOTSTION_WITH_EOF} {
+    strcpy(seal_yylval.error_msg, "EOF in string constant");
     return(ERROR);
 }
 {STRING_APOSTROPHE} {
     curr_lineno += countStr(yytext, '\n');
-    seal_yylval.symbol = stringtable.add_string(yytext);
+    char s[strlen(yytext)];
+    simplifyString(s, yytext);
+    seal_yylval.symbol = stringtable.add_string(s);
     return(CONST_STRING);
+}
+{NAME_CASE_ERROR} {
+    char s[50] = "illegal TYPEID ";
+    strcat(s, yytext);
+    strcpy(seal_yylval.error_msg, s);
+    return (ERROR);
 }
 . {
     strcpy(seal_yylval.error_msg, yytext);
