@@ -119,6 +119,7 @@ void simplifyString(char* proc, const char* orig){
     *tmp2 = '\0';
     return;
 }
+
 void simplifyString2(char* proc, const char* orig){
     const char* tmp1 = orig;
     char* tmp2 = proc;
@@ -132,13 +133,23 @@ void simplifyString2(char* proc, const char* orig){
     return;
 }
 
+bool stringCheckNull(const char *s){
+    const char *c = s;
+    while (*c != '\0'){
+        if (*(c++) != '\\')
+            continue;
+        else if (*(c++) == '0')
+            return true;
+    }
+    return false;
+}
+
 %}
 
  /*
   * Define names for regular expressions here.
   */
 %option noyywrap
-
 
 DIGIT [0-9]
 DIGIT_EXCEPT_ZERO [1-9]
@@ -259,9 +270,9 @@ STRING_APOSTROPHE `[^`]*`
 }
 {STRING_QUOTSTION} {
     //count fuction remove '"' '\'
-    if (strlen(yytext) > 255){
+    if (strlen(yytext) > 258){
         char s[259];
-        strncpy(s, yytext, 255);
+        strncpy(s, yytext, 258);
         s[258] = '\0';
         yyless(258);
         curr_lineno += countStr(s, '\n');
@@ -270,6 +281,10 @@ STRING_APOSTROPHE `[^`]*`
     }
     else{
         curr_lineno += countStr(yytext, '\n');
+        if (stringCheckNull(yytext)){
+            strcpy(seal_yylval.error_msg, "String contains null character '\\0'");
+            return(ERROR);
+        }
         char s[strlen(yytext)];
         simplifyString(s, yytext);
         seal_yylval.symbol = stringtable.add_string(s);

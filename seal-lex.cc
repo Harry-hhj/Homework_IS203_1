@@ -603,9 +603,9 @@ int yy_flex_debug = 1;
 
 static const flex_int16_t yy_rule_linenum[24] =
     {   0,
-      177,  178,  181,  186,  187,  190,  194,  198,  202,  206,
-      210,  220,  236,  240,  244,  250,  257,  261,  279,  284,
-      288,  295,  301
+      188,  189,  192,  197,  198,  201,  205,  209,  213,  217,
+      221,  231,  247,  251,  255,  261,  268,  272,  295,  300,
+      304,  311,  317
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -737,6 +737,7 @@ void simplifyString(char* proc, const char* orig){
     *tmp2 = '\0';
     return;
 }
+
 void simplifyString2(char* proc, const char* orig){
     const char* tmp1 = orig;
     char* tmp2 = proc;
@@ -750,12 +751,23 @@ void simplifyString2(char* proc, const char* orig){
     return;
 }
 
-#line 754 "seal-lex.cc"
-#line 138 "seal.flex"
+bool stringCheckNull(const char *s){
+    const char *c = s;
+    while (*c != '\0'){
+        if (*(c++) != '\\')
+            continue;
+        else if (*(c++) == '0')
+            return true;
+    }
+    return false;
+}
+
+#line 766 "seal-lex.cc"
+#line 150 "seal.flex"
  /*
   * Define names for regular expressions here.
   */
-#line 759 "seal-lex.cc"
+#line 771 "seal-lex.cc"
 
 #define INITIAL 0
 
@@ -1035,12 +1047,12 @@ YY_DECL
 
 	{
 /* %% [7.0] user's declarations go here */
-#line 173 "seal.flex"
+#line 184 "seal.flex"
 
  /*
  *	Add Rules here. Error function has been given.
  */
-#line 1044 "seal-lex.cc"
+#line 1056 "seal-lex.cc"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1122,13 +1134,13 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 177 "seal.flex"
+#line 188 "seal.flex"
 {;}
 	YY_BREAK
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 178 "seal.flex"
+#line 189 "seal.flex"
 {
     curr_lineno += countStr(yytext, '\n');
 }
@@ -1136,7 +1148,7 @@ YY_RULE_SETUP
 case 3:
 /* rule 3 can match eol */
 YY_RULE_SETUP
-#line 181 "seal.flex"
+#line 192 "seal.flex"
 {
     curr_lineno += countStr(yytext, '\n');
     strcpy(seal_yylval.error_msg, "EOF in comment");
@@ -1145,20 +1157,20 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 186 "seal.flex"
+#line 197 "seal.flex"
 {;}
 	YY_BREAK
 case 5:
 /* rule 5 can match eol */
 YY_RULE_SETUP
-#line 187 "seal.flex"
+#line 198 "seal.flex"
 {
     curr_lineno += 1;
 }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 190 "seal.flex"
+#line 201 "seal.flex"
 {
     char c = yytext[0];
     return(c);
@@ -1166,7 +1178,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 194 "seal.flex"
+#line 205 "seal.flex"
 {
     seal_yylval.symbol = idtable.add_string(yytext);
     return(TYPEID);
@@ -1174,7 +1186,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 198 "seal.flex"
+#line 209 "seal.flex"
 {
     char c = yytext[0];
     return(c);
@@ -1182,7 +1194,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 202 "seal.flex"
+#line 213 "seal.flex"
 {
     char c = yytext[0];
     return(c);
@@ -1190,7 +1202,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 206 "seal.flex"
+#line 217 "seal.flex"
 {
     char c = yytext[0];
     return(c);
@@ -1198,7 +1210,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 210 "seal.flex"
+#line 221 "seal.flex"
 {
     switch(yytext[0]){
         case '>': return(GE);
@@ -1212,7 +1224,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 220 "seal.flex"
+#line 231 "seal.flex"
 {
     switch(yytext[0]){
         case 'v': return(VAR);
@@ -1232,7 +1244,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 236 "seal.flex"
+#line 247 "seal.flex"
 {
     seal_yylval.symbol = inttable.add_string(yytext);
     return(CONST_INT);
@@ -1240,7 +1252,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 240 "seal.flex"
+#line 251 "seal.flex"
 {
     seal_yylval.symbol = floattable.add_string(yytext);
     return(CONST_FLOAT);
@@ -1248,7 +1260,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 244 "seal.flex"
+#line 255 "seal.flex"
 {
     char s[strlen(yytext)];
     int2string(s, hexToDecimal(yytext));
@@ -1258,7 +1270,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 250 "seal.flex"
+#line 261 "seal.flex"
 {
     if (yytext[0]=='t')
         seal_yylval.boolean = true;
@@ -1269,7 +1281,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 257 "seal.flex"
+#line 268 "seal.flex"
 {
     seal_yylval.symbol = idtable.add_string(yytext);
     return(OBJECTID);
@@ -1278,11 +1290,12 @@ YY_RULE_SETUP
 case 18:
 /* rule 18 can match eol */
 YY_RULE_SETUP
-#line 261 "seal.flex"
+#line 272 "seal.flex"
 {
-    if (strlen(yytext) > 255){
+    //count fuction remove '"' '\'
+    if (strlen(yytext) > 258){
         char s[259];
-        strncpy(s, yytext, 255);
+        strncpy(s, yytext, 258);
         s[258] = '\0';
         yyless(258);
         curr_lineno += countStr(s, '\n');
@@ -1291,6 +1304,10 @@ YY_RULE_SETUP
     }
     else{
         curr_lineno += countStr(yytext, '\n');
+        if (stringCheckNull(yytext)){
+            strcpy(seal_yylval.error_msg, "String contains null character '\\0'");
+            return(ERROR);
+        }
         char s[strlen(yytext)];
         simplifyString(s, yytext);
         seal_yylval.symbol = stringtable.add_string(s);
@@ -1301,7 +1318,7 @@ YY_RULE_SETUP
 case 19:
 /* rule 19 can match eol */
 YY_RULE_SETUP
-#line 279 "seal.flex"
+#line 295 "seal.flex"
 {
     curr_lineno += countStr(yytext, '\n');
     strcpy(seal_yylval.error_msg, "newline in quotation must use a '\\'");
@@ -1310,7 +1327,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 284 "seal.flex"
+#line 300 "seal.flex"
 {
     strcpy(seal_yylval.error_msg, "EOF in string constant");
     return(ERROR);
@@ -1319,7 +1336,7 @@ YY_RULE_SETUP
 case 21:
 /* rule 21 can match eol */
 YY_RULE_SETUP
-#line 288 "seal.flex"
+#line 304 "seal.flex"
 {
     curr_lineno += countStr(yytext, '\n');
     char s[strlen(yytext)];
@@ -1330,7 +1347,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 295 "seal.flex"
+#line 311 "seal.flex"
 {
     char s[50] = "illegal TYPEID ";
     strcat(s, yytext);
@@ -1340,7 +1357,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 301 "seal.flex"
+#line 317 "seal.flex"
 {
     strcpy(seal_yylval.error_msg, yytext);
     return (ERROR);
@@ -1348,10 +1365,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 306 "seal.flex"
+#line 322 "seal.flex"
 ECHO;
 	YY_BREAK
-#line 1355 "seal-lex.cc"
+#line 1372 "seal-lex.cc"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2500,6 +2517,6 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 306 "seal.flex"
+#line 322 "seal.flex"
 
 
