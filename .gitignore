@@ -4,3 +4,6 @@
 test.seal
 test.output
 test_ans.output
+lexer
+lexer_answer
+Judge.sh
