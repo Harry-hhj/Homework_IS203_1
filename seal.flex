@@ -106,15 +106,26 @@ int countStr(char* m, char s){
 }
 
 void simplifyString(char* proc, const char* orig){
+//    cout << orig << endl;
     const char* tmp1 = orig;
     char* tmp2 = proc;
     while(*tmp1 != '\0'){
-        if (*tmp1 == '\\')
+        if (*tmp1 == '\\' && (*(tmp1+1) == 'b' || *(tmp1+1) == 'n' || *(tmp1+1) == 't' || *(tmp1+1) == 'f')){
+            switch (*(tmp1+1)) {
+                case 'b': *(tmp2++) = '\b';++tmp1;++tmp1;break;
+                case 'n': *(tmp2++) = '\n';++tmp1;++tmp1;break;
+                case 't': *(tmp2++) = '\t';++tmp1;++tmp1;break;
+                case 'f': *(tmp2++) = '\f';++tmp1;++tmp1;break;
+            }
+        }
+        else if (*tmp1 == '\\'){
             *(tmp2++) = *((++tmp1)++);
+        }
         else if (*tmp1 == '"')
             ++tmp1;
-        else
+        else{
             *(tmp2++) = *(tmp1++);
+        }
     }
     *tmp2 = '\0';
     return;
@@ -175,8 +186,8 @@ LETTER_UPPERCASE [A-Z]
 NAME_CONTENT [a-zA-Z_0-9]
 NAME_CASE_ERROR [A-Z][a-zA-Z_0-9]*
 
-STRING_QUOTSTION \"([^\"\n]|\\\n)*\"
-STRING_QUOTSTION_WITH_NO_TRANSFER \"[^\"\n]*[^\"\\]?\n
+STRING_QUOTSTION \"([^\"\n]|(\\\n)|([^\\]\\\"))*\"
+STRING_QUOTSTION_WITH_NO_TRANSFER \"([^\"\n]*(\\\n)?)*[^\"\\]?\n
 STRING_QUOTSTION_WITH_EOF \"[^\"\n]*
 STRING_APOSTROPHE `[^`]*`
 

@@ -7,3 +7,4 @@ test_ans.output
 lexer
 lexer_answer
 Judge.sh
+seal-lex.cc
